@@ -250,12 +250,11 @@ const defaultMusicReviews = [
   }
 ];
 
-const ADMIN_PASSWORD = "bobo";
-
 let images = loadImages();
-let recipes = loadCollection("bobo-records-recipes", defaultRecipes);
-let musicReviews = loadCollection("bobo-records-music", defaultMusicReviews);
-let films = loadCollection("bobo-records-films", []);
+let recipes = structuredClone(defaultRecipes);
+let musicReviews = structuredClone(defaultMusicReviews);
+let films = [];
+let adminToken = sessionStorage.getItem("bobo-admin-token") || "";
 let pointer = { x: 0, y: 0 };
 let pointerReady = false;
 let workItems = [];
@@ -269,37 +268,36 @@ const adminLogin = document.querySelector("#adminLogin");
 const adminPanel = document.querySelector("#adminPanel");
 const filmList = document.querySelector("#filmList");
 
-function loadCollection(key, fallback) {
-  try {
-    const saved = JSON.parse(localStorage.getItem(key) || "null");
-    return Array.isArray(saved) ? saved : structuredClone(fallback);
-  } catch {
-    return structuredClone(fallback);
-  }
-}
-
-function saveCollection(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
 function loadImages() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("bobo-records-images") || "null");
-    if (Array.isArray(saved) && saved.length === defaultImages.length) {
-      return saved.map((item, index) => ({ ...defaultImages[index], ...item }));
-    }
-  } catch {
-    return structuredClone(defaultImages);
-  }
   return structuredClone(defaultImages);
 }
 
-function saveImages() {
-  localStorage.setItem("bobo-records-images", JSON.stringify(images));
+async function loadRemoteContent() {
+  try {
+    const response = await fetch("/api/content");
+    if (!response.ok) return;
+    const data = await response.json();
+    if (Array.isArray(data.images) && data.images.length) {
+      images = data.images.map((item, index) => ({ ...defaultImages[index % defaultImages.length], ...item }));
+    }
+    if (Array.isArray(data.recipes) && data.recipes.length) recipes = data.recipes;
+    if (Array.isArray(data.musicReviews) && data.musicReviews.length) musicReviews = data.musicReviews;
+    if (Array.isArray(data.films)) films = data.films;
+  } catch {
+    // Static hosting fallback: default content stays visible.
+  }
 }
 
-function saveFilms() {
-  saveCollection("bobo-records-films", films);
+async function saveRemoteCollection(collection, value) {
+  const response = await fetch(`/api/content/${collection}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${adminToken}`
+    },
+    body: JSON.stringify(value)
+  });
+  if (!response.ok) throw new Error(`Failed to save ${collection}`);
 }
 
 function mountImages() {
@@ -423,8 +421,16 @@ function bindAdmin() {
   }
 
   document.querySelector("#closeAdminLogin").addEventListener("click", closeAdminLogin);
-  document.querySelector("#unlockAdmin").addEventListener("click", () => {
-    if (document.querySelector("#adminPassword").value === ADMIN_PASSWORD) {
+  document.querySelector("#unlockAdmin").addEventListener("click", async () => {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: document.querySelector("#adminPassword").value })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      adminToken = data.token;
+      sessionStorage.setItem("bobo-admin-token", adminToken);
       closeAdminLogin();
       openAdminPanel();
     }
@@ -435,43 +441,43 @@ function bindAdmin() {
     button.addEventListener("click", () => switchAdminTab(button.dataset.adminTab));
   });
 
-  document.querySelector("#saveImages").addEventListener("click", () => {
+  document.querySelector("#saveImages").addEventListener("click", async () => {
     const formData = new FormData(imageForm);
     images = images.map((item, index) => ({
       ...item,
       src: String(formData.get(`src-${index}`) || item.src).trim(),
       caption: String(formData.get(`caption-${index}`) || "").trim()
     }));
-    saveImages();
+    await saveRemoteCollection("images", images);
     mountImages();
   });
 
-  document.querySelector("#resetImages").addEventListener("click", () => {
+  document.querySelector("#resetImages").addEventListener("click", async () => {
     images = structuredClone(defaultImages);
-    saveImages();
+    await saveRemoteCollection("images", images);
     mountImages();
   });
 
-  document.querySelector("#cocktailForm").addEventListener("submit", (event) => {
+  document.querySelector("#cocktailForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = document.querySelector("#cocktailName").value.trim();
     const build = document.querySelector("#cocktailBuild").value.trim();
     const note = document.querySelector("#cocktailNote").value.trim();
     if (!name && !build && !note) return;
     recipes.unshift({ name: name || "Untitled Cocktail", build, note });
-    saveCollection("bobo-records-recipes", recipes);
+    await saveRemoteCollection("recipes", recipes);
     renderRecipes();
     event.currentTarget.reset();
   });
 
-  document.querySelector("#musicForm").addEventListener("submit", (event) => {
+  document.querySelector("#musicForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const title = document.querySelector("#musicTitle").value.trim();
     const artist = document.querySelector("#musicArtist").value.trim();
     const review = document.querySelector("#musicReview").value.trim();
     if (!title && !artist && !review) return;
     musicReviews.unshift({ title: title || "Untitled Music", artist, review });
-    saveCollection("bobo-records-music", musicReviews);
+    await saveRemoteCollection("musicReviews", musicReviews);
     renderMusic();
     event.currentTarget.reset();
   });
@@ -504,7 +510,7 @@ function switchAdminTab(name) {
 }
 
 function bindFilmForm() {
-  document.querySelector("#filmForm").addEventListener("submit", (event) => {
+  document.querySelector("#filmForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const title = document.querySelector("#filmTitle").value.trim();
     const director = document.querySelector("#filmDirector").value.trim();
@@ -517,7 +523,7 @@ function bindFilmForm() {
       feeling,
       date: new Date().toISOString()
     });
-    saveFilms();
+    await saveRemoteCollection("films", films);
     renderFilms();
     event.currentTarget.reset();
   });
@@ -646,13 +652,18 @@ function animateLayers() {
   requestAnimationFrame(animateLayers);
 }
 
-mountImages();
-renderRecipes();
-renderMusic();
-renderFilms();
-bindPanels();
-bindHeader();
-bindAdmin();
-bindFilmForm();
-bindCursor();
-animateLayers();
+async function init() {
+  await loadRemoteContent();
+  mountImages();
+  renderRecipes();
+  renderMusic();
+  renderFilms();
+  bindPanels();
+  bindHeader();
+  bindAdmin();
+  bindFilmForm();
+  bindCursor();
+  animateLayers();
+}
+
+init();
