@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bobo Records</title>
+    <link rel="stylesheet" href="styles.css?v=20260521-10" />
+    <script src="app.js?v=20260521-10" defer></script>
+  </head>
+  <body>
+    <div id="cursor" aria-hidden="true"></div>
+    <div id="scrim" aria-hidden="true"></div>
+
+    <div id="page">
+      <header class="site-header">
+        <div class="scroll-copy">
+          <button id="expandInfo" aria-expanded="false">
+            <strong>BOBO RECORDS</strong> collects drinks, listening notes, images, and small
+            fragments from daily life. It is a personal room for recipes, albums, and things worth
+            returning to.
+            <span class="dots">...</span><span class="period">.</span>
+          </button>
+          <div class="expanded-copy" id="expandedCopy">
+            <p>
+              The site keeps two public shelves: cocktail recipes for future nights, and music
+              reviews for records that stayed in the room after they stopped playing.
+            </p>
+            <p>
+              Images float around the page like loose notes. Click this paragraph to pull the
+              archive inward; use the image editor to swap the atmosphere whenever the room changes.
+            </p>
+            <div class="info-grid">
+              <div>
+                <p>Contact:<br /><a href="mailto:hello@example.com">hello@example.com</a></p>
+                <p>Current modes:<br />cocktails, music, images, notes</p>
+                <p>Built as a personal index, not a feed.</p>
+              </div>
+              <div>
+                <p>Now collecting:</p>
+                <p>
+                  stirred drinks<br />
+                  sour builds<br />
+                  late records<br />
+                  voice memo reviews<br />
+                  room photographs
+                </p>
+                <p>Updated whenever something earns a second look.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <a id="logo" href="#" aria-label="Bobo Records home">
+        <svg class="pr-mark" viewBox="0 0 180 230" role="img" aria-hidden="true">
+          <path class="pr-stroke" d="M31 203 L34 58" />
+          <path class="pr-stroke" d="M34 58 L154 57" />
+          <path class="pr-stroke" d="M154 57 C161 57 164 70 164 86 C164 107 146 118 113 118 L51 116" />
+          <path class="pr-stroke" d="M43 93 L155 203" />
+          <path class="pr-stroke" d="M34 58 C52 31 101 21 145 25 C162 27 168 43 166 83" />
+          <ellipse class="logo-eye" cx="63" cy="101" rx="19" ry="20" />
+          <path class="logo-cut" d="M49 73 C66 59 97 54 126 56 L119 82 C88 79 67 78 49 73Z" />
+          <path class="logo-cut" d="M132 58 L159 59 L158 84 L127 88Z" />
+        </svg>
+      </a>
+
+      <button id="mobileToggle" aria-expanded="false">
+        <strong>BOBO RECORDS</strong>
+        <span>V</span>
+      </button>
+
+      <main class="viewport" aria-label="Bobo Records visual field">
+        <section class="image-layer layer-a" aria-hidden="true"></section>
+        <section class="image-layer layer-b" aria-hidden="true"></section>
+        <section class="image-layer layer-c" aria-hidden="true"></section>
+      </main>
+
+      <aside class="accordion-menu" aria-label="Site content">
+        <section class="accordion-item" data-panel="cocktails">
+          <button class="accordion-trigger">COCKTAIL RECIPES</button>
+          <div class="accordion-content">
+            <div class="table-container" id="recipeList"></div>
+          </div>
+        </section>
+
+        <section class="accordion-item" data-panel="music">
+          <button class="accordion-trigger">MUSIC REVIEWS</button>
+          <div class="accordion-content">
+            <div class="review-list" id="musicList"></div>
+          </div>
+        </section>
+
+        <section class="accordion-item" data-panel="film">
+          <button class="accordion-trigger">FILM NOTES</button>
+          <div class="accordion-content">
+            <div class="film-list" id="filmList"></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="admin-login" id="adminLogin" aria-label="Admin login" aria-hidden="true">
+        <div class="admin-head">
+          <h2>Admin</h2>
+          <button id="closeAdminLogin" type="button">Close</button>
+        </div>
+        <label>
+          Password
+          <input id="adminPassword" type="password" autocomplete="current-password" />
+        </label>
+        <button id="unlockAdmin" type="button">Unlock</button>
+      </section>
+
+      <section class="admin-panel" id="adminPanel" aria-label="Admin editor" aria-hidden="true">
+        <div class="admin-head">
+          <h2>Admin Editor</h2>
+          <button id="closeAdminPanel" type="button">Close</button>
+        </div>
+        <div class="admin-tabs">
+          <button type="button" data-admin-tab="images">Images</button>
+          <button type="button" data-admin-tab="cocktails">Cocktails</button>
+          <button type="button" data-admin-tab="music">Music</button>
+          <button type="button" data-admin-tab="films">Films</button>
+        </div>
+        <div class="admin-section open" data-admin-section="images">
+          <form id="imageForm" class="admin-form"></form>
+          <button id="saveImages" type="button">Save Images</button>
+          <button id="resetImages" type="button">Reset</button>
+        </div>
+        <form class="admin-section admin-form" data-admin-section="cocktails" id="cocktailForm">
+          <label>Name<input id="cocktailName" type="text" /></label>
+          <label>Recipe<textarea id="cocktailBuild" rows="4"></textarea></label>
+          <label>Note<textarea id="cocktailNote" rows="3"></textarea></label>
+          <button type="submit">Save Cocktail</button>
+        </form>
+        <form class="admin-section admin-form" data-admin-section="music" id="musicForm">
+          <label>Title<input id="musicTitle" type="text" /></label>
+          <label>Artist / Context<input id="musicArtist" type="text" /></label>
+          <label>Review<textarea id="musicReview" rows="4"></textarea></label>
+          <button type="submit">Save Music Review</button>
+        </form>
+        <form class="admin-section admin-form" data-admin-section="films" id="filmForm">
+          <label>Movie<input id="filmTitle" type="text" autocomplete="off" /></label>
+          <label>Director<input id="filmDirector" type="text" autocomplete="off" /></label>
+          <label>Feeling<textarea id="filmFeeling" rows="5"></textarea></label>
+          <button type="submit">Save Film Note</button>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>
