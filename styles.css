@@ -212,35 +212,6 @@ body.info-expanded .expanded-copy {
   letter-spacing: 0;
 }
 
-.logo-cut {
-  fill: var(--grey);
-}
-
-.logo-eye {
-  fill: var(--white);
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-#logo:hover .logo-eye {
-  animation: eye-blink 0.42s steps(1, end) 1;
-}
-
-@keyframes eye-blink {
-  0% {
-    transform: scaleY(1);
-  }
-  45% {
-    transform: scaleY(0.05);
-  }
-  70% {
-    transform: scaleY(0.05);
-  }
-  100% {
-    transform: scaleY(1);
-  }
-}
-
 .main-links {
   position: fixed;
   bottom: 0;
